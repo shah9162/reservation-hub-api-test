@@ -1,0 +1,72 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
+<!--
+    This file controls what runs. Both ways of running use it:
+      - Eclipse: right-click this file > Run As > TestNG Suite
+      - Maven:   mvn test  (or Eclipse: right-click the project > Run As > Maven test), which also builds the Allure report
+
+    Each <test> block is one feature, so the report's "Suites" tab is grouped the same way.
+    To skip a feature, comment out its <test> block.
+
+    configfailurepolicy="continue": if a setup step fails for one test (e.g. the shared server is slow and getting the
+    token times out), only that test is affected. TestNG's default would skip every remaining test in the class.
+-->
+<suite name="Reservation Hub - Bookings API" verbose="1" configfailurepolicy="continue">
+
+    <!-- To run ONLY the smoke tests (core journey, the production incident, write protection),
+         remove the comment markers around this block:
+    <groups>
+        <run>
+            <include name="smoke"/>
+        </run>
+    </groups>
+    -->
+
+    <test name="Health check">
+        <classes>
+            <class name="com.reservationhub.tests.HealthCheckTest"/>
+        </classes>
+    </test>
+
+    <test name="Authentication">
+        <classes>
+            <class name="com.reservationhub.tests.AuthTest"/>
+        </classes>
+    </test>
+
+    <test name="Booking journey">
+        <classes>
+            <class name="com.reservationhub.tests.BookingJourneyTest"/>
+        </classes>
+    </test>
+
+    <test name="Create booking">
+        <classes>
+            <class name="com.reservationhub.tests.CreateBookingTest"/>
+        </classes>
+    </test>
+
+    <test name="Read and search bookings">
+        <classes>
+            <class name="com.reservationhub.tests.GetBookingTest"/>
+        </classes>
+    </test>
+
+    <test name="Update booking">
+        <classes>
+            <class name="com.reservationhub.tests.UpdateBookingTest"/>
+        </classes>
+    </test>
+
+    <test name="Cancel booking">
+        <classes>
+            <class name="com.reservationhub.tests.DeleteBookingTest"/>
+        </classes>
+    </test>
+
+    <test name="Response contract">
+        <classes>
+            <class name="com.reservationhub.tests.ContractTest"/>
+        </classes>
+    </test>
+
+</suite>

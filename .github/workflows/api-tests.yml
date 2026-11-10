@@ -1,0 +1,33 @@
+name: bookings-api-tests
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * *"   # nightly regression
+
+jobs:
+  smoke-and-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      # Failures are expected while the API defects in BUGS.md are open, so we always publish the report.
+      - name: Run suite
+        run: mvn -B clean test -Dmaven.test.failure.ignore=true
+      - name: Build Allure report
+        if: always()
+        run: mvn -B allure:report
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            target/site/allure-maven-plugin
+            target/surefire-reports
+            target/allure-results
