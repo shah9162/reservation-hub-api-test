@@ -50,7 +50,7 @@ public class CreateBookingTest extends BaseTest {
     }
 
     @Test(groups = "smoke", dataProvider = "incidentCases", dataProviderClass = TestData.class,
-            description = "The production incident: bad price or check-out before check-in is rejected (BUG-01, BUG-02)")
+            description = "The production incident: bad price, check-out before check-in, or check-in in the past is rejected (BUG-01, BUG-02, BUG-13)")
     @Severity(SeverityLevel.BLOCKER)
     public void bookingWithInvalidPriceOrDatesIsRejected(String scenario, Map<String, Object> booking) {
         assertBadRequest(createAndTrack(booking));

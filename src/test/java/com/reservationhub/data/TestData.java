@@ -4,6 +4,7 @@ import com.reservationhub.model.Booking;
 import com.reservationhub.model.BookingDates;
 import org.testng.annotations.DataProvider;
 
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -65,19 +66,25 @@ public final class TestData {
         return booking;
     }
 
+    /** A date relative to today, as yyyy-MM-dd. Built at run time so "in the past" stays in the past. */
+    public static String daysFromToday(int days) {
+        return LocalDate.now().plusDays(days).toString();
+    }
+
     public static String uniqueId() {
         return UUID.randomUUID().toString().substring(0, 8);
     }
 
     // ------------------------------------------------------------------ data providers
 
-    /** The production incident: bad price or impossible dates. */
+    /** The production incident (bad price or impossible dates), plus check-in in the past. */
     @DataProvider(name = "incidentCases")
     public static Object[][] incidentCases() {
         return new Object[][]{
                 {"negative price", bookingWith("totalprice", -100)},
                 {"zero price", bookingWith("totalprice", 0)},
                 {"check-out before check-in", bookingWithDates(CHECKIN, "2031-03-09")},
+                {"check-in in the past", bookingWithDates(daysFromToday(-30), daysFromToday(-26))},
         };
     }
 

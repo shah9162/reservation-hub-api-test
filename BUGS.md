@@ -3,7 +3,7 @@
 Host: `https://restful-booker.herokuapp.com` · Found by the automated suite, run from Eclipse on **10 Nov 2026** (JDK 21, Maven 3.9.9).
 The new findings (BUG-11, BUG-12) were also re-checked by hand. The full report is `reports/allure-report/index.html`, where each failing test shows the exact request and response.
 
-**Suite result: 45 tests · 17 passed · 28 failed.** All 28 failures are the defects below, plus one product-decision row (zero price).
+**Suite result: 46 tests · 17 passed · 29 failed.** All 29 failures are the defects below, plus one product-decision row (zero price).
 No failures came from the environment or the framework.
 
 | ID | Title | Severity | Why this severity | Failing tests |
@@ -16,6 +16,7 @@ No failures came from the environment or the framework.
 | BUG-04 | Failed login returns **200** | **Medium** | Clients checking only the status treat a failed login as success (no token is issued, so no data leaks) | 3 |
 | BUG-10 | `checkin` search **excludes the given day** | **Medium** | "Arrivals from 10 March" misses guests arriving on 10 March | 1 |
 | BUG-11 | `GET /booking/1.5` returns **booking 1** | **Medium** | A malformed reference silently returns a different customer's booking | 1 |
+| BUG-13 | **Check-in in the past** accepted (e.g. 2024) | **Medium** (needs product decision) | Past stays distort availability and revenue. The documented sample booking is itself dated 2024, so the intended rule must be confirmed | 1 |
 | BUG-05 | Unknown booking id on PUT/DELETE returns **405** instead of 404 | **Low** | Misleading: suggests the method is unsupported | 2 |
 | BUG-06 | Successful cancel returns **201 Created** | **Low** | Wrong meaning; the booking is removed, not created | 1 |
 | BUG-07 | Health check `GET /ping` returns **201 Created** | **Low** | Monitoring that expects 200 reports the service as down | 1 |
@@ -89,6 +90,20 @@ curl -i https://restful-booker.herokuapp.com/booking/1.5 -H 'Accept: application
 ```
 **Expected:** `404` (or `400`). **Actual:** `200` with the data of booking **1** (checked by hand: identical to `GET /booking/1`).
 `abc` and `999999999` correctly return `404`. Test: `GetBookingTest.unknownOrInvalidIdIsNotFound[decimal id]`.
+
+## BUG-13 – A booking with check-in in the past is accepted (needs product decision)
+```bash
+curl -i -X POST https://restful-booker.herokuapp.com/booking -H 'Content-Type: application/json' -H 'Accept: application/json' \
+  -d '{"firstname":"Jim","lastname":"Brown","totalprice":111,"depositpaid":true,"bookingdates":{"checkin":"2024-01-01","checkout":"2024-01-05"},"additionalneeds":"Breakfast"}'
+```
+**Expected:** `400`/`422` for a check-in before today. **Actual:** `200`, and the booking is stored.
+**Why it needs a decision:** the sample booking in the API documentation is itself dated 2024, so either past bookings are meant to be
+allowed (e.g. importing historical records) or the API **and** its documentation are both wrong. For a reservation hub that takes new
+bookings from partners, a stay in the past is almost certainly invalid: it is the same kind of bad data as the production incident.
+**Recommendation:** confirm the rule with product. If past check-ins are invalid, reject them with `400`/`422` and update the documentation example.
+**How it was missed at first:** the suite used fixed 2031 dates for stability, so it never tested the boundary around today. The test now
+builds its dates from today's date (`TestData.daysFromToday(-30)`), so "in the past" stays in the past on every run.
+Test: `CreateBookingTest.bookingWithInvalidPriceOrDatesIsRejected[check-in in the past]`.
 
 ## BUG-05 – Unknown booking id returns 405 instead of 404
 ```bash

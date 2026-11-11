@@ -52,7 +52,9 @@ I accept either of two equally valid codes where the choice is only style: 400 o
 - **HTTP Basic auth for writes:** token auth is the documented main path.
 - **XML responses:** not in scope.
 
-**Assumption to confirm with product:** a zero price is treated as invalid. If free bookings are allowed, delete that one row in `TestData.incidentCases`.
+**Assumptions to confirm with product:**
+- **Zero price:** treated as invalid. If free bookings are allowed, delete that row in `TestData.incidentCases`.
+- **Check-in in the past:** treated as invalid (BUG-13), even though the documentation's own sample booking is dated 2024. If past bookings are allowed (e.g. imports), delete that row.
 
 ## Shared, self-resetting environment and flakiness
 
@@ -68,4 +70,5 @@ I accept either of two equally valid codes where the choice is only style: 400 o
 - **Reset race:** the reset can still delete a booking in the middle of a test, which shows up as an unexpected 404. It is rare because each test takes about a second. If it happens, re-run.
 - **Sequential runs:** tests run one after another, to be gentle on the shared server.
 - **Hand-written schemas:** there is no OpenAPI file, so the schemas come from the docs. They reject unknown fields on purpose, so a new response field will fail the contract tests until the schema is updated.
+- **Dates relative to today:** most tests use fixed 2031 dates for stability. The one exception is the past-check-in case, which builds its dates from today so it never goes stale. A gap I found after the first submission was that nothing tested the boundary around today (BUG-13).
 - **Exact `Accept` header:** requests send `Accept: application/json` exactly, because the API answers `418` to the usual list of JSON types (BUG-12).
